@@ -56,7 +56,7 @@ net x-drv-target-vel      cia402.0.drv-target-velocity    => lcec.0.A6.target-ve
 # CIA Custom Homing
 setp joint.0.request-cia-homing [JOINT_0]CIA402_HOMING_ENABLED
 setp lcec.0.A6.homing-method [JOINT_0]CIA402_HOMING_METHOD
-setp lcec.0.A6.homing-high-velocity 20000 [JOINT_0]CIA402_HOMING_SEARCH_VELOCITY
-setp lcec.0.A6.homing-low-velocity 7000 [JOINT_0]CIA402_HOMING_LATCH_VELOCITY
-setp lcec.0.A6.homing-acceleration 131072 [JOINT_0]CIA402_HOMING_ACCELERATION
+setp lcec.0.A6.homing-high-velocity [JOINT_0]CIA402_HOMING_SEARCH_VELOCITY
+setp lcec.0.A6.homing-low-velocity [JOINT_0]CIA402_HOMING_LATCH_VELOCITY
+setp lcec.0.A6.homing-acceleration [JOINT_0]CIA402_HOMING_ACCELERATION
 net x-start-homing       joint.0.start-cia-homing         => cia402.0.home
