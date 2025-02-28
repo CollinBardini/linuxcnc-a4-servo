@@ -1,0 +1,62 @@
+# -----------------------------
+# EtherCAT and Motion Config
+# -----------------------------
+
+# Load kinematics and motion modules
+loadrt [KINS]KINEMATICS
+loadrt [EMCMOT]EMCMOT servo_period_nsec=[EMCMOT]SERVO_PERIOD num_joints=[KINS]JOINTS
+
+# Load EtherCAT configuration from XML
+loadusr -W lcec_conf ethercat-conf.xml
+
+# Load EtherCAT and CIA402 drivers
+loadrt lcec
+loadrt cia402 count=1
+
+# Add EtherCAT and motion processing functions to the servo thread
+addf    lcec.read-all            servo-thread
+addf    cia402.0.read-all        servo-thread
+addf    motion-command-handler   servo-thread
+addf    motion-controller        servo-thread
+addf    cia402.0.write-all       servo-thread
+addf    lcec.write-all           servo-thread
+
+# Enable EMC control
+setp iocontrol.0.emc-enable-in 1
+
+
+# -----------------------------
+# AXIS X Configuration
+# -----------------------------
+
+# Set CIA402 into Profile Position Mode
+setp cia402.0.csp-mode 1
+#setp cia402.0.el7-mode 0
+# pos-scale = (encoder counts per revolution) × (mechanical ratio) ÷ (units per revolution)
+setp cia402.0.pos-scale 13107.2
+
+# Motion signal mappings for axis X
+net x-enable           <= joint.0.amp-enable-out          => cia402.0.enable
+net x-amp-fault        => joint.0.amp-fault-in            <= cia402.0.drv-fault
+net x-pos-cmd          <= joint.0.motor-pos-cmd           => cia402.0.pos-cmd
+net x-pos-fb           => joint.0.motor-pos-fb            <= cia402.0.pos-fb
+
+# EtherCAT to CIA402 driver mapping
+net x-statusword          lcec.0.A6.status-word           => cia402.0.statusword => joint.0.cia-statusword
+net x-opmode-display      lcec.0.A6.mode-display          => cia402.0.opmode-display
+net x-drv-act-pos         lcec.0.A6.actual-position       => cia402.0.drv-actual-position
+net x-drv-act-vel         lcec.0.A6.actual-velocity       => cia402.0.drv-actual-velocity
+
+# CIA402 driver to EtherCAT mapping
+net x-controlword         cia402.0.controlword            => lcec.0.A6.control-word
+net x-mode-of-operation   cia402.0.opmode                 => lcec.0.A6.control-mode
+net x-drv-target-pos      cia402.0.drv-target-position    => lcec.0.A6.target-position
+net x-drv-target-vel      cia402.0.drv-target-velocity    => lcec.0.A6.target-velocity
+
+# CIA Custom Homing
+setp joint.0.request-cia-homing [JOINT_0]CIA402_HOMING_ENABLED
+setp lcec.0.A6.homing-method [JOINT_0]CIA402_HOMING_METHOD
+setp lcec.0.A6.homing-high-velocity 20000 [JOINT_0]CIA402_HOMING_SEARCH_VELOCITY
+setp lcec.0.A6.homing-low-velocity 7000 [JOINT_0]CIA402_HOMING_LATCH_VELOCITY
+setp lcec.0.A6.homing-acceleration 131072 [JOINT_0]CIA402_HOMING_ACCELERATION
+net x-start-homing       joint.0.start-cia-homing         => cia402.0.home
